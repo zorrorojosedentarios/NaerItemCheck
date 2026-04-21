@@ -31,6 +31,21 @@ local function UpdateItemStatus(itemID, status)
     if BuildList then BuildList() end
 end
 
+local PendingQueries = {}
+
+local timeoutFrame = CreateFrame("Frame")
+timeoutFrame:SetScript("OnUpdate", function(self, elapsed)
+    local now = GetTime()
+    for id, timeSent in pairs(PendingQueries) do
+        if now - timeSent > 1.5 then
+            PendingQueries[id] = nil
+            if NIC_ItemStatus[id] == "WAIT" then
+                UpdateItemStatus(id, "NOT")
+            end
+        end
+    end
+end)
+
 function SendQuery(itemID)
     if not itemID then return end
     if not CanQuery() then
@@ -40,6 +55,7 @@ function SendQuery(itemID)
 
     lastQueryTime = GetTime()
     UpdateItemStatus(itemID, "WAIT")
+    PendingQueries[itemID] = GetTime()
 
     local cmd = ".player iteminfo " .. itemID
     SendChatMessage(cmd, "SAY")
@@ -218,7 +234,8 @@ BuildList = function()
 
             btn:SetScript("OnEnter", function() 
                 GameTooltip:SetOwner(btn, "ANCHOR_RIGHT")
-                GameTooltip:SetHyperlink("item:" .. item.id)
+                local success, err = pcall(function() GameTooltip:SetHyperlink("item:" .. item.id) end)
+                if not success then GameTooltip:SetText("No se pudo cargar el tooltip (Conflicto con ClassLoot u otro addon)") end
                 GameTooltip:Show()
             end)
             btn:SetScript("OnLeave", GameTooltip_Hide)
@@ -254,40 +271,71 @@ local edContent = CreateFrame("Frame", nil, edScroll)
 edContent:SetSize(1, 1)
 edScroll:SetScrollChild(edContent)
 
-local editBoxes = {}
+local ebPool = {}
+local fsPool = {}
 
 ShowEditor = function()
     NIC_EditorFrame:Show()
-    for _, obj in ipairs(editBoxes) do obj:Hide() end
-    wipe(editBoxes)
+    for _, obj in ipairs(ebPool) do obj:Hide() end
+    for _, obj in ipairs(fsPool) do obj:Hide() end
 
     local diffKey = NIC_CurrentSize .. (NIC_IsHeroic and "H" or "N")
     local db = (NaerItemCheckDB and NaerItemCheckDB.Items) or NaerItemsDB
     local data = db[NIC_CurrentRaid][diffKey]
     local y = -10
+    local ebCount, fsCount = 0, 0
 
     for bIdx, boss in ipairs(data) do
-        local h = edContent:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+        fsCount = fsCount + 1
+        local h = fsPool[fsCount]
+        if not h then
+            h = edContent:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+            table.insert(fsPool, h)
+        end
         h:SetPoint("TOPLEFT", 10, y)
         h:SetText(boss.boss)
-        table.insert(editBoxes, h)
+        h:Show()
         y = y - 25
 
         for iIdx, item in ipairs(boss.items) do
-            local eb = CreateFrame("EditBox", nil, edContent, "InputBoxTemplate")
-            eb:SetSize(80, 24)
+            ebCount = ebCount + 1
+            local eb = ebPool[ebCount]
+            if not eb then
+                eb = CreateFrame("EditBox", nil, edContent)
+                eb:SetSize(60, 24)
+                eb:SetAutoFocus(false)
+                eb:SetFontObject("ChatFontNormal")
+                eb:SetJustifyH("CENTER")
+                eb:SetBackdrop({
+                    bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
+                    edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+                    tile = true, tileSize = 16, edgeSize = 16,
+                    insets = { left = 4, right = 4, top = 4, bottom = 4 }
+                })
+                eb:SetBackdropColor(0, 0, 0, 0.8)
+                eb:SetBackdropBorderColor(0.5, 0.5, 0.5, 0.8)
+                table.insert(ebPool, eb)
+            end
+            eb:ClearAllPoints()
             eb:SetPoint("TOPLEFT", 15, y)
-            eb:SetText(item.id)
-            eb:SetAutoFocus(false)
+            eb:SetTextInsets(0, 0, 0, 0)
+            eb:SetText(tostring(item.id))
+            eb:ClearFocus()
             eb.bIdx = bIdx
             eb.iIdx = iIdx
+            eb:Show()
             
-            local name = edContent:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+            fsCount = fsCount + 1
+            local name = fsPool[fsCount]
+            if not name then
+                name = edContent:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+                table.insert(fsPool, name)
+            end
+            name:ClearAllPoints()
             name:SetPoint("LEFT", eb, "RIGHT", 10, 0)
             name:SetText(GetItemInfo(item.id) or "Item "..item.id)
+            name:Show()
 
-            table.insert(editBoxes, eb)
-            table.insert(editBoxes, name)
             y = y - 28
         end
         y = y - 10
@@ -353,8 +401,42 @@ for i, m in ipairs(modes) do
         NIC_IsHeroic = m.heroic
         wipe(NIC_ItemStatus)
         BuildList()
+        if NIC_EditorFrame and NIC_EditorFrame:IsShown() and ShowEditor then ShowEditor() end
     end)
 end
+
+-- =========================
+-- Pestañas de Banda (Tabs)
+-- =========================
+
+local function Tab_OnClick(self)
+    PanelTemplates_SetTab(NIC_Frame, self:GetID())
+    if self:GetID() == 1 then
+        NIC_CurrentRaid = "ICC"
+    else
+        NIC_CurrentRaid = "SR"
+    end
+    wipe(NIC_ItemStatus)
+    if BuildList then BuildList() end
+    if NIC_EditorFrame and NIC_EditorFrame:IsShown() and ShowEditor then ShowEditor() end
+end
+
+NIC_Frame.numTabs = 2
+
+local tab1 = CreateFrame("Button", "NIC_FrameTab1", NIC_Frame, "CharacterFrameTabButtonTemplate")
+tab1:SetID(1)
+tab1:SetText("ICC")
+tab1:SetPoint("BOTTOMLEFT", NIC_Frame, "BOTTOMLEFT", 15, -30)
+tab1:SetScript("OnClick", Tab_OnClick)
+
+local tab2 = CreateFrame("Button", "NIC_FrameTab2", NIC_Frame, "CharacterFrameTabButtonTemplate")
+tab2:SetID(2)
+tab2:SetText("SR")
+tab2:SetPoint("LEFT", tab1, "RIGHT", -16, 0)
+tab2:SetScript("OnClick", Tab_OnClick)
+
+PanelTemplates_SetNumTabs(NIC_Frame, 2)
+PanelTemplates_SetTab(NIC_Frame, 1)
 
 -- Eventos
 local listener = CreateFrame("Frame")
@@ -365,12 +447,20 @@ listener:SetScript("OnEvent", function(self, event, msg)
         wipe(NIC_ItemStatus)
         if NIC_Frame:IsShown() then BuildList() end
     elseif event == "CHAT_MSG_SYSTEM" then
-        local id = tonumber(msg:match("item:(%d+)"))
+        local id = tonumber(msg:match("item:(%d+)")) or tonumber(msg:match("ID (%d+)"))
         if id then
-            if msg:find("no tiene") or msg:find("doesn't have") or msg:find("0 copias") then UpdateItemStatus(id, "NOT")
-            elseif msg:find("tiene") or msg:find("has") then UpdateItemStatus(id, "HAS") end
+            local lowerMsg = msg:lower()
+            if lowerMsg:find("no tiene") or lowerMsg:find("doesn't have") or lowerMsg:find("0 copias") or lowerMsg:find("cantidad 0") or lowerMsg:find("no encontr") or lowerMsg:find("no se encontr") then
+                UpdateItemStatus(id, "NOT")
+            elseif lowerMsg:find("tiene") or lowerMsg:find("has") or lowerMsg:find("encontrado") then
+                UpdateItemStatus(id, "HAS")
+            end
         end
     end
 end)
 
 NIC_Frame:SetScript("OnShow", BuildList)
+NIC_Frame:SetScript("OnHide", function()
+    if helpFrame and helpFrame:IsShown() then helpFrame:Hide() end
+    if NIC_EditorFrame and NIC_EditorFrame:IsShown() then NIC_EditorFrame:Hide() end
+end)

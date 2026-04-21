@@ -1,4 +1,4 @@
-﻿-- NaerItemCheck - Final Database (AtlasLoot Synchronized)
+-- NaerItemCheck - Final Database 
 NaerItemsDB = {
     ["ICC"] = {
         ["10N"] = {
@@ -814,6 +814,87 @@ NaerItemsDB = {
                     { id = 50731 },
                     { id = 50733 },
                     { id = 50818 },
+                }
+            }
+        }
+    },
+    ["SR"] = {
+        ["10N"] = {
+            {
+                boss = "Halion",
+                items = {
+                    { id = 53115 }, -- Capa de abducción
+                    { id = 53103 }, -- Obsequio de Baltharus
+                    { id = 53119 }, -- Botas de ser dividido
+                    { id = 53112 }, -- Brazales del heredero
+                    { id = 53117 }, -- Guantes cambiadores
+                    { id = 53114 }, -- Sark anochecedor
+                    { id = 53118 }, -- Cinturón desdichado
+                    { id = 53116 }, -- Tributo a Saviana
+                    { id = 53111 }, -- Botines de sucesor
+                    { id = 53121 }, -- Cinturón sustituto
+                    { id = 53113 }, -- Sobrehombros de escamas Crepusculares
+                    { id = 53110 }, -- Ofrenda de Zarithrian
+                }
+            }
+        },
+        ["10H"] = {
+            {
+                boss = "Halion",
+                items = {
+                    { id = 54556 },
+                    { id = 54557 },
+                    { id = 54558 },
+                    { id = 54559 },
+                    { id = 54560 },
+                    { id = 54561 },
+                    { id = 54562 },
+                    { id = 54563 },
+                    { id = 54564 },
+                    { id = 54565 },
+                    { id = 54566 },
+                    { id = 54567 },
+                }
+            }
+        },
+        ["25N"] = {
+            {
+                boss = "Halion",
+                items = {
+                    { id = 54571 }, -- Escama Crepuscular petrificada
+                    { id = 54569 }, -- Escama Crepuscular afilada
+                    { id = 54572 }, -- Escama Crepuscular carbonizada
+                    { id = 54573 }, -- Escama Crepuscular resplandeciente
+                    { id = 53129 }, -- Botines de resurrección inminente
+                    { id = 53487 }, -- Pasos de vaticinio
+                    { id = 53132 }, -- Colgante de lobreguez
+                    { id = 53133 }, -- Sello de crepúsculo
+                    { id = 53126 }, -- Bandas agraviadas
+                    { id = 53489 }, -- Capa de ocaso ardiente
+                    { id = 53486 }, -- Brazales de noche ígnea
+                    { id = 53134 }, -- Brazales de cambio de fase
+                    { id = 53488 }, -- Cinturón de forma partida
+                    { id = 53127 }, -- Pisadas de regreso
+                    { id = 53125 }, -- Avanzado del Apocalipsis
+                    { id = 53490 }, -- Anillo de regeneración por fase
+                }
+            }
+        },
+        ["25H"] = {
+            {
+                boss = "Halion",
+                items = {
+                    { id = 54591 },
+                    { id = 54590 },
+                    { id = 54588 },
+                    { id = 54589 },
+                    { id = 54579 },
+                    { id = 54586 },
+                    { id = 54581 },
+                    { id = 54576 },
+                    { id = 54580 },
+                    { id = 54583 },
+                    { id = 54582 },
                 }
             }
         }
