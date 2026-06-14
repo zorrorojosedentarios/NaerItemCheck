@@ -1,0 +1,11 @@
+﻿## Interface: 30300
+## Title: !|cff00ffffAddon Naer|r |cff33ff33[NaerItemCheck]|r
+## Notes: Item check addon (WotLK 3.3.5)
+## Author: Zorrorojo/Miabuelita (Guild Sedentarios)
+## Servidor NaerZone
+## Version: 1.5.1
+## SavedVariables: NaerItemCheckDB
+## X-Part-Of: !|cff00ffffAddon Naer|r
+NaerItemsDB.lua
+NaerItemCheck.lua
+NaerItemCheck_UI.lua

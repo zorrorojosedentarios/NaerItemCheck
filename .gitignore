@@ -1,0 +1,4 @@
+﻿*.png
+node_modules/
+convert.ps1
+%TEMP%/
